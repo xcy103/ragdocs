@@ -1,20 +1,18 @@
-// CI/CD pipeline: build the backend image, push it to ECR, deploy to the App EC2.
+// CI/CD pipeline: build the backend + frontend images, push to ECR, deploy to the App EC2.
 //
-// Configure these in Jenkins (NOT committed here, to keep account IDs/hosts private):
-//   - Global env vars (Manage Jenkins > System > Global properties > Environment variables):
-//       ECR_REGISTRY  e.g. <acct>.dkr.ecr.us-west-2.amazonaws.com
-//       APP_HOST      the App EC2 private/public host to deploy to
-//   - SSH credential (Manage Jenkins > Credentials), kind "SSH Username with private key":
-//       id: app-ssh, username: ec2-user, key: contents of ~/.ssh/ragdocs-key.pem
-// The Jenkins instance's IAM role grants ECR push; the App instance's role grants ECR pull.
+// Configure in Jenkins (NOT committed here, to keep account IDs/hosts private):
+//   - Global env vars: ECR_REGISTRY (e.g. <acct>.dkr.ecr.us-west-2.amazonaws.com), APP_HOST
+//   - SSH credential id `app-ssh` (ec2-user + ~/.ssh/ragdocs-key.pem)
+// The Jenkins instance role grants ECR push; the App instance role grants ECR pull.
 
 pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-west-2'
-        IMAGE_REPO = "${ECR_REGISTRY}/ragdocs-backend"
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+        AWS_REGION    = 'us-west-2'
+        BACKEND_REPO  = "${ECR_REGISTRY}/ragdocs-backend"
+        FRONTEND_REPO = "${ECR_REGISTRY}/ragdocs-frontend"
+        TAG           = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -22,9 +20,10 @@ pipeline {
             steps { checkout scm }
         }
 
-        stage('Build image') {
+        stage('Build images') {
             steps {
-                sh 'docker build -t $IMAGE_REPO:$IMAGE_TAG -t $IMAGE_REPO:latest ./backend'
+                sh 'docker build -t $BACKEND_REPO:$TAG -t $BACKEND_REPO:latest ./backend'
+                sh 'docker build -t $FRONTEND_REPO:$TAG -t $FRONTEND_REPO:latest ./frontend'
             }
         }
 
@@ -33,8 +32,10 @@ pipeline {
                 sh '''
                     aws ecr get-login-password --region $AWS_REGION \
                       | docker login --username AWS --password-stdin $ECR_REGISTRY
-                    docker push $IMAGE_REPO:$IMAGE_TAG
-                    docker push $IMAGE_REPO:latest
+                    docker push $BACKEND_REPO:$TAG
+                    docker push $BACKEND_REPO:latest
+                    docker push $FRONTEND_REPO:$TAG
+                    docker push $FRONTEND_REPO:latest
                 '''
             }
         }
@@ -42,6 +43,8 @@ pipeline {
         stage('Deploy to App EC2') {
             steps {
                 sshagent(['app-ssh']) {
+                    // Keep the server's compose file in sync with the repo, then redeploy.
+                    sh 'scp -o StrictHostKeyChecking=no compose.prod.yml ec2-user@$APP_HOST:~/ragdocs/compose.prod.yml'
                     sh 'ssh -o StrictHostKeyChecking=no ec2-user@$APP_HOST "cd ~/ragdocs && aws ecr get-login-password --region us-west-2 | sudo docker login --username AWS --password-stdin $ECR_REGISTRY && sudo docker compose -f compose.prod.yml pull && sudo docker compose -f compose.prod.yml up -d"'
                 }
             }
@@ -49,7 +52,7 @@ pipeline {
     }
 
     post {
-        success { echo "Deployed build ${IMAGE_TAG} to ${APP_HOST}" }
+        success { echo "Deployed build ${TAG} to ${APP_HOST}" }
         failure { echo 'Pipeline failed — check the stage logs.' }
     }
 }

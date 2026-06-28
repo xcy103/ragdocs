@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+// Empty base = same-origin relative requests (production: nginx proxies /documents,
+// /chat, etc. to the backend). For local `npm run dev`, set VITE_API_BASE in .env.
+const BASE = import.meta.env.VITE_API_BASE || "";
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {

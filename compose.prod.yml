@@ -1,10 +1,10 @@
-# Production stack for the App EC2. The backend image comes from ECR; its full URI
-# (which embeds the AWS account ID) is supplied via the BACKEND_IMAGE env var in the
-# server-side .env, so it is never committed here.
+# Production stack for the App EC2. Images come from ECR; their full URIs (which embed
+# the AWS account ID) are supplied via env vars in the server-side .env, never committed.
 #
 # Server .env must define:
 #   BACKEND_IMAGE=<acct>.dkr.ecr.us-west-2.amazonaws.com/ragdocs-backend:latest
-#   ANTHROPIC_API_KEY=<key>
+#   FRONTEND_IMAGE=<acct>.dkr.ecr.us-west-2.amazonaws.com/ragdocs-frontend:latest
+#   OPENAI_API_KEY=<key>
 services:
   mongo:
     image: mongo:7
@@ -21,8 +21,9 @@ services:
   backend:
     image: ${BACKEND_IMAGE}
     restart: unless-stopped
-    ports:
-      - "80:8000"
+    # Internal only — the frontend nginx reverse-proxies to it by service name.
+    expose:
+      - "8000"
     env_file: .env
     environment:
       MONGODB_URI: mongodb://mongo:27017
@@ -30,6 +31,14 @@ services:
     depends_on:
       - mongo
       - qdrant
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   mongo_data:
