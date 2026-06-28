@@ -42,15 +42,7 @@ pipeline {
         stage('Deploy to App EC2') {
             steps {
                 sshagent(['app-ssh']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@$APP_HOST '
-                            cd ~/ragdocs &&
-                            aws ecr get-login-password --region us-west-2 \
-                              | sudo docker login --username AWS --password-stdin '"$ECR_REGISTRY"' &&
-                            sudo docker compose -f compose.prod.yml pull &&
-                            sudo docker compose -f compose.prod.yml up -d
-                        '
-                    '''
+                    sh 'ssh -o StrictHostKeyChecking=no ec2-user@$APP_HOST "cd ~/ragdocs && aws ecr get-login-password --region us-west-2 | sudo docker login --username AWS --password-stdin $ECR_REGISTRY && sudo docker compose -f compose.prod.yml pull && sudo docker compose -f compose.prod.yml up -d"'
                 }
             }
         }
