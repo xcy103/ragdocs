@@ -39,8 +39,26 @@ aws ec2 authorize-security-group-ingress --group-id <app-sg> --protocol tcp --po
 ## Progress
 
 - [x] **5a — Foundation (free)**: billing alarm, ECR repos, key pair, security groups.
-- [ ] **5b — App EC2** *(billable)*: launch instance, install Docker, pull image from ECR, `docker compose up`.
+- [x] **5b — App EC2** *(billable)*: t4g.medium (Graviton/arm64) running Docker; `compose.prod.yml`
+  pulls the backend image from ECR and runs backend + mongo + qdrant. Backend is published on
+  port 80; the API is publicly reachable (`/health`, `/docs`). The `ANTHROPIC_API_KEY` and the
+  `BACKEND_IMAGE` ECR URI are set in the server-side `.env` only.
 - [ ] **5c — Jenkins EC2** *(billable)*: launch instance, install Jenkins, configure GitHub webhook + pipeline (build → push ECR → SSH deploy to App server).
+
+### App server operations
+
+```bash
+ssh -i ~/.ssh/ragdocs-key.pem ec2-user@<app-ip>
+cd ~/ragdocs
+sudo docker compose -f compose.prod.yml ps          # status
+sudo docker compose -f compose.prod.yml logs backend # logs
+sudo docker compose -f compose.prod.yml pull && \
+  sudo docker compose -f compose.prod.yml up -d      # redeploy latest image
+```
+
+> **Cost**: stop the instance when not demoing — `aws ec2 stop-instances --instance-ids <id>`
+> (you keep the EBS volume + data, pay only storage). `start-instances` to bring it back; the
+> public IP changes on stop/start unless an Elastic IP is attached.
 
 ## Cost control
 

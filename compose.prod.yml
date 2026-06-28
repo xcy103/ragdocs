@@ -1,0 +1,36 @@
+# Production stack for the App EC2. The backend image comes from ECR; its full URI
+# (which embeds the AWS account ID) is supplied via the BACKEND_IMAGE env var in the
+# server-side .env, so it is never committed here.
+#
+# Server .env must define:
+#   BACKEND_IMAGE=<acct>.dkr.ecr.us-west-2.amazonaws.com/ragdocs-backend:latest
+#   ANTHROPIC_API_KEY=<key>
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      QDRANT_URL: http://qdrant:6333
+    depends_on:
+      - mongo
+      - qdrant
+
+volumes:
+  mongo_data:
+  qdrant_data:
