@@ -12,7 +12,7 @@ A full-stack Retrieval-Augmented Generation chatbot:
   and retrieval-augmented answer generation.
 - **MongoDB**: stores raw documents, chunks, and chat history (metadata / source of truth).
 - **Qdrant**: vector database for semantic retrieval over document chunks.
-- **Embeddings**: local `sentence-transformers` (`all-MiniLM-L6-v2`, 384-dim). No external key.
+- **Embeddings**: local `fastembed` (ONNX, `BAAI/bge-small-en-v1.5`, 384-dim). No PyTorch, no external key.
 - **LLM**: Anthropic Claude (`claude-opus-4-8`) for answer generation. Requires `ANTHROPIC_API_KEY`.
 - **Infra**: Docker / docker-compose; deploy target is AWS EC2; CI/CD via Jenkins.
 
@@ -36,7 +36,7 @@ generation step calls Claude.** Keep it that way unless we deliberately switch e
 - **Secrets**: never hardcode `ANTHROPIC_API_KEY` or any secret. Read from env / `.env`
   (gitignored). `.env.example` documents the names with placeholder values.
 - **Vector dimension**: the Qdrant collection dim MUST match the embedding model (384 for
-  `all-MiniLM-L6-v2`). Changing the embedding model means recreating the collection.
+  `bge-small-en-v1.5`). Changing the embedding model means recreating the collection.
 - **No silent truncation**: if a document or context is too large, chunk it — don't cut it off.
 - **Layering**: routers (HTTP) → services (logic) → db (drivers). Routers never touch DB drivers
   directly; services never parse `Request` objects.

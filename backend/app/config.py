@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "document_chunks"
 
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
 
     top_k: int = 4
     chunk_size: int = 800

@@ -4,6 +4,6 @@ pydantic>=2.9
 pydantic-settings>=2.5
 motor>=3.6
 qdrant-client>=1.12
-sentence-transformers>=3.3
+fastembed>=0.5
 anthropic>=0.69
 python-multipart>=0.0.12

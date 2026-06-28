@@ -13,7 +13,7 @@ CI/CD pipeline.
 | Backend     | FastAPI (Python 3.11+)                            |
 | Documents   | MongoDB (Motor async driver)                      |
 | Vectors     | Qdrant                                            |
-| Embeddings  | `sentence-transformers` / `all-MiniLM-L6-v2` (local, 384-dim) |
+| Embeddings  | `fastembed` (ONNX) / `BAAI/bge-small-en-v1.5` (local, 384-dim) |
 | Generation  | Anthropic Claude (`claude-opus-4-8`)             |
 | Infra       | Docker, docker-compose, AWS EC2, Jenkins         |
 
