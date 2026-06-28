@@ -1,10 +1,10 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.db.mongo import get_db
 from app.models.schemas import DocumentIn, DocumentOut
-from app.services.retrieval import index_document
+from app.services.retrieval import delete_document, index_document
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -26,3 +26,11 @@ async def list_documents() -> list[DocumentOut]:
         DocumentOut(id=d["_id"], title=d["title"], num_chunks=d.get("num_chunks", 0))
         async for d in cursor
     ]
+
+
+@router.delete("/{document_id}", status_code=204)
+async def remove_document(document_id: str) -> None:
+    result = await get_db().documents.delete_one({"_id": document_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="document not found")
+    await delete_document(document_id)

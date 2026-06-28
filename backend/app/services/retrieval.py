@@ -1,6 +1,12 @@
 import uuid
 
-from qdrant_client.models import PointStruct
+from qdrant_client.models import (
+    FieldCondition,
+    Filter,
+    FilterSelector,
+    MatchValue,
+    PointStruct,
+)
 
 from app.config import get_settings
 from app.db.qdrant import ensure_collection, get_qdrant
@@ -46,3 +52,20 @@ async def retrieve(query: str) -> list[Source]:
         )
         for h in response.points
     ]
+
+
+async def delete_document(document_id: str) -> None:
+    """Remove all chunks belonging to a document from Qdrant."""
+    settings = get_settings()
+    await get_qdrant().delete(
+        collection_name=settings.qdrant_collection,
+        points_selector=FilterSelector(
+            filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id", match=MatchValue(value=document_id)
+                    )
+                ]
+            )
+        ),
+    )
