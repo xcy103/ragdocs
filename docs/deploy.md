@@ -43,7 +43,19 @@ aws ec2 authorize-security-group-ingress --group-id <app-sg> --protocol tcp --po
   pulls the backend image from ECR and runs backend + mongo + qdrant. Backend is published on
   port 80; the API is publicly reachable (`/health`, `/docs`). The `ANTHROPIC_API_KEY` and the
   `BACKEND_IMAGE` ECR URI are set in the server-side `.env` only.
-- [ ] **5c — Jenkins EC2** *(billable)*: launch instance, install Jenkins, configure GitHub webhook + pipeline (build → push ECR → SSH deploy to App server).
+- [x] **5c — Jenkins EC2** *(billable)*: t4g.medium running Jenkins (Java 21). Pipeline
+  (`Jenkinsfile`) builds the backend image, pushes to ECR, and SSH-deploys to the App server.
+  End-to-end verified: a build recreates only the App's backend container.
+
+### CI/CD notes
+
+- Jenkins env vars (Manage Jenkins → System → Global properties): `ECR_REGISTRY`, `APP_HOST`.
+- SSH credential id `app-ssh` (ec2-user + key) drives the deploy step.
+- **`APP_HOST` must be the App server's *private* IP**, not public. Security-group source-group
+  references only match traffic inside the VPC; dialing the public IP makes the source appear as
+  Jenkins's public IP and the rule won't match (SSH times out). Private IP also survives stop/start.
+- Trigger: Poll SCM (or manual Build Now). A GitHub webhook would require exposing Jenkins :8080
+  publicly, which we avoid.
 
 ### App server operations
 
