@@ -25,8 +25,9 @@ Claude Code using the prompt in [`docs/prompts.md`](docs/prompts.md).
 - [x] **Phase 0 — Scaffold**: repo structure, `CLAUDE.md`, docker-compose, backend skeleton.
 - [x] **Phase 1 — Document ingestion**: `POST /documents` → chunk → embed → store in Qdrant + MongoDB. `GET /documents`, `DELETE /documents/{id}`.
 - [x] **Phase 2 — Retrieval + RAG chat**: `POST /chat` → embed query → Qdrant top-k → OpenAI → answer with cited sources. `GET /chat/{conversation_id}` history. (Streaming output still TODO.)
-- [ ] **Phase 3 — Frontend** *(in progress)*: React + Redux. Documents page + chat page wired to the APIs.
-- [x] **Phase 4 — Dockerize** *(backend)*: backend `Dockerfile` + `compose.prod.yml`. Frontend image still TODO.
+- [x] **Phase 3 — Frontend**: React + Redux. Documents page + chat page wired to the APIs.
+- [x] **Phase 4 — Dockerize**: backend + frontend Dockerfiles; `compose.prod.yml` runs the whole
+  stack. nginx serves the SPA and reverse-proxies the API (same-origin, no CORS).
 - [x] **Phase 5 — Deploy + CI/CD**: backend live on AWS EC2; Jenkins pipeline (build → push ECR → SSH deploy). See [`docs/deploy.md`](docs/deploy.md).
 
 ## Future work / TODO

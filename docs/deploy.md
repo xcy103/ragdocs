@@ -15,14 +15,18 @@ Real deployment of the RAG chatbot to AWS EC2, with a separate Jenkins CI server
 ## Architecture
 
 ```
-GitHub push ──webhook──▶ Jenkins EC2 ──build image──▶ ECR
-                              │
-                              └──SSH──▶ App EC2: docker compose pull && up -d
-                                          ├─ backend (FastAPI)
-                                          ├─ frontend (nginx, Phase 3)
-                                          ├─ qdrant
-                                          └─ mongo
+GitHub push ──poll──▶ Jenkins EC2 ──build backend+frontend──▶ ECR
+                          │
+                          └──scp compose + SSH──▶ App EC2: docker compose pull && up -d
+                                      ├─ frontend (nginx :80, serves SPA + proxies API)
+                                      ├─ backend (FastAPI, internal :8000)
+                                      ├─ qdrant
+                                      └─ mongo
 ```
+
+The frontend nginx reverse-proxies `/documents`, `/chat`, `/health`, `/docs` to the backend, so
+the browser only ever talks to one origin (port 80) — no CORS in production. The whole site is at
+`http://<app-ec2-ip>/`.
 
 ## Security groups (rules, not IDs)
 
