@@ -13,7 +13,7 @@ A full-stack Retrieval-Augmented Generation chatbot:
 - **MongoDB**: stores raw documents, chunks, and chat history (metadata / source of truth).
 - **Qdrant**: vector database for semantic retrieval over document chunks.
 - **Embeddings**: local `fastembed` (ONNX, `BAAI/bge-small-en-v1.5`, 384-dim). No PyTorch, no external key.
-- **LLM**: Anthropic Claude (`claude-opus-4-8`) for answer generation. Requires `ANTHROPIC_API_KEY`.
+- **LLM**: OpenAI (`gpt-4o-mini` by default) for answer generation. Requires `OPENAI_API_KEY`.
 - **Infra**: Docker / docker-compose; deploy target is AWS EC2; CI/CD via Jenkins.
 
 ## Architecture (request flow)
@@ -21,20 +21,19 @@ A full-stack Retrieval-Augmented Generation chatbot:
 ```
 Upload:  client → POST /documents → chunk → embed (local) → Qdrant + MongoDB
 Chat:    client → POST /chat → embed query → Qdrant top-k → build context
-                → Claude (claude-opus-4-8) → answer (+ cited sources) → MongoDB
+                → OpenAI (gpt-4o-mini) → answer (+ cited sources) → MongoDB
 ```
 
 The single boundary that matters: **embeddings are produced locally; only the final
-generation step calls Claude.** Keep it that way unless we deliberately switch embedding providers.
+generation step calls the LLM.** Keep it that way unless we deliberately switch embedding providers.
 
 ## Hard rules (do not violate)
 
-- **Claude calls**: use the official `anthropic` Python SDK only. Never raw `requests`/`httpx`
-  to the Anthropic API, never an OpenAI-compatible shim.
-- **Model**: default `claude-opus-4-8`. Adaptive thinking only — `thinking={"type": "adaptive"}`.
-  Do **not** pass `budget_tokens`, `temperature`, `top_p`, or `top_k` (they 400 on this model).
-- **Secrets**: never hardcode `ANTHROPIC_API_KEY` or any secret. Read from env / `.env`
-  (gitignored). `.env.example` documents the names with placeholder values.
+- **LLM calls**: use the official `openai` Python SDK (`AsyncOpenAI`). The model is configurable
+  via `LLM_MODEL` (default `gpt-4o-mini`). All generation goes through `app/services/chat.py`.
+- **Secrets**: never hardcode `OPENAI_API_KEY` or any secret — and never put a real key in
+  `.env.example` (it is committed). Real keys go in `.env` (gitignored) locally, or in the
+  server's `.env`. `.env.example` only holds placeholder values.
 - **Vector dimension**: the Qdrant collection dim MUST match the embedding model (384 for
   `bge-small-en-v1.5`). Changing the embedding model means recreating the collection.
 - **No silent truncation**: if a document or context is too large, chunk it — don't cut it off.
@@ -67,7 +66,7 @@ npm install && npm run dev
 
 ## Env vars
 
-See `.env.example`. Required: `ANTHROPIC_API_KEY`, `MONGODB_URI`, `QDRANT_URL`.
+See `.env.example`. Required: `OPENAI_API_KEY`, `MONGODB_URI`, `QDRANT_URL`.
 
 ## Definition of done for a change
 

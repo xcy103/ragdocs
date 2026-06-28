@@ -1,7 +1,7 @@
 # RAG-based Chatbot System
 
 Full-stack Retrieval-Augmented Generation chatbot: **React + Redux** frontend, **FastAPI**
-backend, **MongoDB** for documents/history, **Qdrant** for vector retrieval, **Claude** for
+backend, **MongoDB** for documents/history, **Qdrant** for vector retrieval, **OpenAI** for
 answer generation, containerized with **Docker** and deployable to **AWS EC2** with a **Jenkins**
 CI/CD pipeline.
 
@@ -14,7 +14,7 @@ CI/CD pipeline.
 | Documents   | MongoDB (Motor async driver)                      |
 | Vectors     | Qdrant                                            |
 | Embeddings  | `fastembed` (ONNX) / `BAAI/bge-small-en-v1.5` (local, 384-dim) |
-| Generation  | Anthropic Claude (`claude-opus-4-8`)             |
+| Generation  | OpenAI (`gpt-4o-mini`)                           |
 | Infra       | Docker, docker-compose, AWS EC2, Jenkins         |
 
 ## Build phases
@@ -24,7 +24,7 @@ Claude Code using the prompt in [`docs/prompts.md`](docs/prompts.md).
 
 - [x] **Phase 0 — Scaffold**: repo structure, `CLAUDE.md`, docker-compose, backend skeleton.
 - [ ] **Phase 1 — Document ingestion**: `POST /documents` → chunk → embed → store in Qdrant + MongoDB. `GET /documents` to list.
-- [ ] **Phase 2 — Retrieval + RAG chat**: `POST /chat` → embed query → Qdrant top-k → Claude → answer with cited sources. Persist chat history in MongoDB.
+- [ ] **Phase 2 — Retrieval + RAG chat**: `POST /chat` → embed query → Qdrant top-k → OpenAI → answer with cited sources. Persist chat history in MongoDB.
 - [ ] **Phase 3 — Frontend**: React + Redux. Document upload page + chat page wired to the APIs. Streaming responses.
 - [ ] **Phase 4 — Dockerize**: multi-container compose (frontend, backend, mongo, qdrant); Dockerfiles for FE/BE.
 - [ ] **Phase 5 — Deploy + CI/CD**: AWS EC2 deploy; Jenkins pipeline for build → test → deploy.
@@ -32,7 +32,7 @@ Claude Code using the prompt in [`docs/prompts.md`](docs/prompts.md).
 ## Quick start (local)
 
 ```bash
-cp .env.example .env          # then fill in ANTHROPIC_API_KEY
+cp .env.example .env          # then fill in OPENAI_API_KEY
 docker compose up -d mongo qdrant
 
 cd backend

@@ -8,8 +8,8 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-opus-4-8"
+    openai_api_key: str = ""
+    llm_model: str = "gpt-4o-mini"
 
     mongodb_uri: str = "mongodb://localhost:27017"
     mongodb_db: str = "ragdocs"

@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-import anthropic
+from openai import AsyncOpenAI
 
 from app.config import get_settings
 from app.models.schemas import Source
@@ -13,9 +13,9 @@ SYSTEM_PROMPT = (
 
 
 @lru_cache
-def _client() -> anthropic.AsyncAnthropic:
-    # Reads ANTHROPIC_API_KEY from the environment.
-    return anthropic.AsyncAnthropic(api_key=get_settings().anthropic_api_key or None)
+def _client() -> AsyncOpenAI:
+    # Reads OPENAI_API_KEY from the environment if not passed explicitly.
+    return AsyncOpenAI(api_key=get_settings().openai_api_key or None)
 
 
 def _build_context(sources: list[Source]) -> str:
@@ -24,7 +24,7 @@ def _build_context(sources: list[Source]) -> str:
 
 
 async def generate_answer(message: str, sources: list[Source]) -> str:
-    """Generate a grounded answer from retrieved context using Claude."""
+    """Generate a grounded answer from retrieved context using the LLM."""
     context = _build_context(sources) or "(no relevant documents found)"
     user_content = (
         f"Context:\n{context}\n\n"
@@ -32,11 +32,12 @@ async def generate_answer(message: str, sources: list[Source]) -> str:
         "Answer using only the context above."
     )
 
-    response = await _client().messages.create(
-        model=get_settings().claude_model,
+    response = await _client().chat.completions.create(
+        model=get_settings().llm_model,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        thinking={"type": "adaptive"},
-        messages=[{"role": "user", "content": user_content}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
+        ],
     )
-    return "".join(block.text for block in response.content if block.type == "text")
+    return response.choices[0].message.content or ""
