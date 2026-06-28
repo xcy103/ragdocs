@@ -43,6 +43,8 @@ generation step calls Claude.** Keep it that way unless we deliberately switch e
 
 ## Conventions
 
+- **Language**: all code, comments, identifiers, and commit messages are written in **English**.
+  (Status reports to the project owner are delivered in Chinese, but nothing in the repo is.)
 - Backend code lives under `backend/app/`. Pydantic models in `app/models/schemas.py`.
 - Config via `app/config.py` (pydantic-settings); read everything from env.
 - Type-hint all functions. Keep services pure and testable (pass clients in, don't import globals).
