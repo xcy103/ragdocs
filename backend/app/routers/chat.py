@@ -27,3 +27,14 @@ async def chat(req: ChatRequest) -> ChatResponse:
         }
     )
     return ChatResponse(conversation_id=conversation_id, answer=answer, sources=sources)
+
+
+@router.get("/{conversation_id}")
+async def get_history(conversation_id: str) -> list[dict]:
+    """Return the stored turns of a conversation, oldest first."""
+    cursor = (
+        get_db()
+        .messages.find({"conversation_id": conversation_id}, {"_id": 0})
+        .sort("created_at", 1)
+    )
+    return [doc async for doc in cursor]
