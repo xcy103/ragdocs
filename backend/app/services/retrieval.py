@@ -30,9 +30,11 @@ async def index_document(document_id: str, title: str, content: str) -> int:
 async def retrieve(query: str) -> list[Source]:
     """Return the top-k most relevant chunks for a query."""
     settings = get_settings()
-    hits = await get_qdrant().search(
+    # qdrant-client >= 1.12 replaced the deprecated `.search()` with `.query_points()`,
+    # which returns a QueryResponse whose `.points` holds the scored hits.
+    response = await get_qdrant().query_points(
         collection_name=settings.qdrant_collection,
-        query_vector=embed_query(query),
+        query=embed_query(query),
         limit=settings.top_k,
     )
     return [
@@ -42,5 +44,5 @@ async def retrieve(query: str) -> list[Source]:
             chunk=h.payload["chunk"],
             score=h.score,
         )
-        for h in hits
+        for h in response.points
     ]
