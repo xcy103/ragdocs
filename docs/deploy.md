@@ -30,8 +30,16 @@ the browser only ever talks to one origin (port 80) — no CORS in production. T
 
 ## Security groups (rules, not IDs)
 
-- **app**: 22 (operator IP only), 80 + 443 (public), 8000 (operator IP, backend testing).
+- **app**: 22 (operator IP + jenkins SG), 80 (operator IP only — the site is private, demo-only),
+  8000 (operator IP, legacy/backend now internal).
 - **jenkins**: 22 + 8080 (operator IP only).
+
+> The whole site is locked to the operator's IP — there is no public access, so the unauthenticated
+> API (which spends OpenAI credits and exposes a destructive `DELETE`) can't be abused. When the
+> operator IP changes, re-point port 80:
+> `aws ec2 authorize-security-group-ingress --group-id <app-sg> --protocol tcp --port 80 --cidr <newip>/32`
+> (and revoke the old one). Defense-in-depth still recommended: set a hard monthly spend cap in the
+> OpenAI dashboard as a backstop.
 
 SSH / Jenkins ingress is pinned to the operator's public IP. When that IP changes, update the
 rule (the concrete SG IDs are in the local inventory file):
