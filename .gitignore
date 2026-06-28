@@ -21,6 +21,9 @@ dist/
 .cache/
 models_cache/
 
+# Local-only infra inventory (real AWS IDs, IPs, account number)
+*.local.md
+
 # OS / editor
 .DS_Store
 .idea/
